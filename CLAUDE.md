@@ -5,10 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project overview
 
 `me_toolbox` is a Python library implementing mechanical engineering design calculations
-(fatigue, gears, springs, fasteners), based on formulas from *Shigley's Mechanical Engineering
-Design* and the AGMA standard. Variable names intentionally mirror textbook notation (`Sut`, `Sy`,
-`Se`, `Kf`, `Kv`, `Yj`, etc.) rather than being expanded into descriptive names — check the
-docstring or the referenced standard before renaming anything.
+(fatigue, gears, springs, fasteners) drawn from two different sources depending on domain:
+`fasteners`, `fatigue`, and `springs` follow *Shigley's Mechanical Engineering Design*; `gears`
+follows the AGMA standard (AGMA 2001-D04). Variable names intentionally mirror the source's
+notation (`Sut`, `Sy`, `Se`, `Kf`, `Kv`, `Yj`, etc.) rather than being expanded into descriptive
+names — check the docstring or the referenced standard before renaming anything.
 
 ## Setup and commands
 
@@ -64,6 +65,14 @@ subclasses (`SpurGear`/`HelicalGear`, `HelicalCompressionSpring`/`ExtensionSprin
 `HelicalTorsionSpring`) add type-specific geometry and override `static_analysis`/
 `fatigue_analysis`. `FatigueAnalysis` and `FailureCriteria` are then applied on top using the
 stresses/strengths computed by the geometry classes.
+
+`fasteners` and `springs` both reuse the shared `fatigue` package (`Bolt`/`BoltPattern` and all
+three spring classes call into `FatigueAnalysis`/`EnduranceLimit`/`FailureCriteria`) — this is
+Shigley's fatigue theory applied consistently across those two domains. `gears` deliberately does
+not go through `fatigue`: `Gear` computes its own AGMA cycle-life factors (`YN`, `ZN`) directly as
+properties, since AGMA's life-factor approach is a separate model from Shigley's and reuse was
+never evaluated. Don't "fix" this by wiring `Gear` into `FatigueAnalysis` without checking the
+AGMA formulas actually match.
 
 ### Standard data tables
 
