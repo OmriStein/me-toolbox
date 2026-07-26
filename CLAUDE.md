@@ -74,6 +74,16 @@ properties, since AGMA's life-factor approach is a separate model from Shigley's
 never evaluated. Don't "fix" this by wiring `Gear` into `FatigueAnalysis` without checking the
 AGMA formulas actually match.
 
+### Examples
+
+Usage isn't documented in docstrings beyond parameter descriptions — `examples/<domain>_examples/`
+is where worked usage lives, one subfolder per domain (`fasteners_examples`, `fatigue_examples`,
+`gears_examples`, `springs_examples`). `fasteners` and `springs` examples are Jupyter notebooks
+(`.ipynb`) walking through a full calculation with textbook figures/tables reproduced as images
+in an `img/` subfolder; `fatigue` and `gears` examples are plain `.py` scripts. When adding a new
+class or changing a constructor's signature, check whether an example uses it and update the
+example alongside the code — these notebooks are the de facto usage reference, not just demos.
+
 ### Standard data tables
 
 `gears/tables/*.csv` and `springs/tables/*.csv` hold digitized values from AGMA/Shigley reference
