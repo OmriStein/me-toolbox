@@ -47,6 +47,25 @@ Things to improve or fix, found while reviewing the codebase.
 - [ ] `threaded_fastener.py`: pre-torque calculation not implemented.
 - [ ] `tools/stress.py`: stress calculations marked as needing improvement.
 
+## Symbolic support (sympy)
+
+- [ ] Typecheck inputs so it's clear which functions/properties tolerate a `sympy.Symbol` in
+  place of a number and which don't. Right now symbolic support is an accident of not
+  type-checking anywhere — a `Symbol` rides through plain arithmetic fine, but silently breaks
+  (`TypeError: cannot determine truth value of Relational`, or a `numpy` type error) the moment
+  it hits `np.interp`, `table_interpolation`, or any `if x > threshold:` branch. Deciding and
+  enforcing which paths are numeric-only vs. symbolic-safe would turn that into a clear error at
+  the call site instead of a confusing one deep in `numpy`/`sympy`.
+- [ ] Build an actual supported way to get a symbolic report out of a calculation (equation with
+  values substituted in, for hand-calc documentation), instead of it only working ad hoc when a
+  `Symbol` happens to be passed in and nothing symbolic-unsafe is hit along the way. See the
+  `HelicalCompressionSpring`/`HelicalTorsionSpring` pattern that used to live in
+  `examples/springs_examples/old/` (deleted in `c27aa2c`) and still lives in
+  `examples/fatigue_examples/FatigueAnalysis_example.py` — solve for a design variable via
+  `sympy.Eq`/`solveset` and `.subs()` it back in. Worth deciding whether this is a first-class
+  API (e.g. an opt-in symbolic mode on the closed-form Shigley formulas: `fatigue`,
+  `stress.py`, spring/bolt geometry) rather than something that only works by accident.
+
 ## Smaller code-quality items
 
 - [ ] `tools/helpers.py:23` has a bare `except Exception: continue` inside `print_atributes`
