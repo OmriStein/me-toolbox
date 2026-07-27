@@ -293,9 +293,9 @@ class Gear:
 
         # load table according to pressure angle
         if pressure_angle == 20:
-            path = os.path.dirname(__file__) + "\\tables\\20deg - spur gear geometry factors.csv"
+            path = os.path.join(os.path.dirname(__file__), "tables", "20deg - spur gear geometry factors.csv")
         elif pressure_angle == 25:
-            path = os.path.dirname(__file__) + "\\tables\\25deg - spur gear geometry factors.csv"
+            path = os.path.join(os.path.dirname(__file__), "tables", "25deg - spur gear geometry factors.csv")
         else:
             raise ValueError("at spur gear Yj Factor: pressure angle is wrong")
 

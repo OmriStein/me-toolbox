@@ -2,7 +2,7 @@ from math import pi
 from sympy import symbols, solveset, Eq
 from sympy.sets import Reals
 from me_toolbox.fatigue import EnduranceLimit, FatigueAnalysis
-from me_toolbox.fatigue import uniform_stress, torsion_stress
+from me_toolbox.tools import uniform_stress, torsion_stress
 
 
 # Normal load: N=F*(0.5+sin(wt))

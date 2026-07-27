@@ -103,9 +103,9 @@ class HelicalGear(SpurGear):
         helix_angle = gear1.helix_angle
 
         # files path
-        j75_path = os.path.dirname(__file__) + "\\tables\\J75 - helix gear geometry factors.csv"
-        jPrime_path = os.path.dirname(
-            __file__) + "\\tables\\JPrime - helix gear geometry factors.csv"
+        j75_path = os.path.join(os.path.dirname(__file__), "tables", "J75 - helix gear geometry factors.csv")
+        jPrime_path = os.path.join(
+            os.path.dirname(__file__), "tables", "JPrime - helix gear geometry factors.csv")
 
         # load data
         j75_data = np.genfromtxt(j75_path, delimiter=',')

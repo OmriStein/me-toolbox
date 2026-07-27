@@ -183,7 +183,7 @@ class Spring(ABC):
         :rtype: float
         """
 
-        path = os.path.dirname(__file__) + "\\tables\\ultimate _tensile_strength.csv"
+        path = os.path.join(os.path.dirname(__file__), "tables", "ultimate _tensile_strength.csv")
         with open(path, newline='') as file:
             reader = csv.DictReader(file)
             table = []
