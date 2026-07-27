@@ -8,22 +8,29 @@ Things to improve or fix, found while reviewing the codebase.
   `spring.py` — `os.path.dirname(__file__) + "\\tables\\..."`) — confirmed by actually running
   `examples/gears_examples/Gears_examples.py` on Linux: crashed with `FileNotFoundError` on
   `me_toolbox/gears\tables\...`. Switched all four call sites to `os.path.join`.
-- [ ] **Critical — `BoltPattern`'s fatigue calculation is completely broken.**
+- [x] **`BoltPattern`'s fatigue calculation was completely broken.**
   `me_toolbox/fasteners/bolt_pattern.py:301` (`variable_equivalent_stresses`, called from
-  `fatigue_safety_factor`) constructs `FatigueAnalysis` with a signature that no longer matches
-  `FatigueAnalysis.__init__` at all:
-  - passes `endurance_limit=endurance_limit[i]` (an `EnduranceLimit` *object*) where the
-    constructor now expects `modified_endurance_limit` as a **float** (the `Se` value — see
-    how `Bolt.endurance_limit()`/the fatigue examples use `.modified`)
-  - never passes `stress_type` or `ultimate_tensile_strength`, both required with no default
-  - passes `Sy=` where the parameter is actually named `yield_strength`
-  Confirmed by executing `examples/fasteners_examples/BoltPattern_example.ipynb`, which hits
-  `TypeError: FatigueAnalysis.__init__() missing 2 required positional arguments` at this call.
-  This means any user calling `BoltPattern.fatigue_safety_factor`/`variable_equivalent_stresses`
-  today gets a crash, not a wrong number — but it means that feature has been non-functional
-  since `FatigueAnalysis`'s constructor was last changed. Needs a real fix (get `ultimate_tensile_strength`
-  from `fastener.bolt.tensile_strength`, decide the right `stress_type` — likely `'multiple'`
-  since both normal and torsion stresses are involved), not a guess.
+  `fatigue_safety_factor`) constructed `FatigueAnalysis` with a signature that no longer matched
+  `FatigueAnalysis.__init__` at all: passed `endurance_limit=endurance_limit[i]` (an
+  `EnduranceLimit` *object*) where the constructor expects `modified_endurance_limit` as a
+  **float**; never passed `stress_type` or `ultimate_tensile_strength`, both required with no
+  default; passed `Sy=` where the parameter is actually named `yield_strength`. Confirmed by
+  executing `examples/fasteners_examples/BoltPattern_example.ipynb`, which crashed at this call
+  for every user of `BoltPattern.fatigue_safety_factor`/`variable_equivalent_stresses`. Fixed:
+  now passes `modified_endurance_limit=endurance_limit[i].modified`, `stress_type='multiple'`
+  (both normal and torsion stress are involved), `ultimate_tensile_strength=fastener.bolt.tensile_strength`,
+  `yield_strength=fastener.bolt.yield_strength`. Verified end-to-end via the notebook and a new
+  regression test in `test_bolt_pattern.py`.
+- [ ] `ExtensionSpring.weight` (inherited unchanged from `HelicalCompressionSpring`) reads
+  `self.total_coils`, but `ExtensionSpring.total_coils` deliberately overrides that to raise
+  `NotImplementedError` ("has no use in ExtensionSpring") — so `.weight` is unusable on any
+  `ExtensionSpring` instance. Looks unintentional; probably should use `self.body_coils` for
+  extension springs, or `weight` needs its own `ExtensionSpring` override. Found while writing
+  `test_extension_spring.py` (pinned down as `test_weight_raises_due_to_total_coils`).
+- [ ] `ExtensionSpring.__repr__` (extension_spring.py:20) — the `hook_shear_yield_percent=...`
+  field actually interpolates `self.hook_normal_yield_percent` instead of
+  `self.hook_shear_yield_percent`. Copy-paste bug, cosmetic (only affects `repr()` output) but
+  easy one-line fix.
 - [ ] `me_toolbox/gears/gear.py` `Kb` property (see `FIXME` at
   `me_toolbox/fatigue/endurance_limit.py:76`) — falls through and returns `None` silently when
   `de` is outside `2.79-254`, instead of raising or covering the full range.
@@ -43,13 +50,12 @@ Things to improve or fix, found while reviewing the codebase.
 
 - [ ] `icecream` is imported by `fatigue_analysis.py` but declared in neither
   `requirements.txt` nor `setup.py` — fresh installs break on import.
-- [ ] `requirements.txt`'s pinned `numpy==1.20.1` **fails to build at all on Python 3.11**
-  (confirmed: no wheel available, source build errors out) — this isn't just staleness risk,
-  it currently blocks installing the project from `requirements.txt` on any recent Python.
-  `sympy==1.7.1` is from the same ~2021 vintage. `setup.py`'s `install_requires` has no version
-  constraints at all, so the two files disagree on strictness as well as currency — reconcile
-  and update the pins (validated running against `numpy 2.4.6`/`sympy 1.14.0` instead, see test
-  findings below for what that version jump exposed).
+- [x] `requirements.txt`'s pinned `numpy==1.20.1` **failed to build at all on Python 3.11**
+  (confirmed: no wheel available, source build errored out) — not just staleness risk, it
+  actively blocked installing the project from `requirements.txt` on any recent Python.
+  Dropped all exact version pins from `requirements.txt` (now just `numpy`/`sympy`/`mpmath`/
+  `icecream`, unpinned), matching `setup.py`'s already-unpinned `install_requires` (which now
+  also lists `icecream`). Whole suite validated running against `numpy 2.4.6`/`sympy 1.14.0`.
 - [ ] `examples/fasteners_examples/*.ipynb` import `inflect` (used only for cosmetic "1st/2nd/3rd"
   ordinal formatting in printed output) without declaring it anywhere — blocks running the
   example notebooks from a fresh environment.
@@ -75,38 +81,36 @@ of sync with the current API:
   on individual `ThreadedFastener` objects — those methods only exist on `BoltPattern` now (see
   `BoltPattern_example2.ipynb`, which already calls them correctly at the pattern level).
   Replaced with `pattern.<method>(verbose=True)`, matching example2's working style.
-- [ ] **The existing test suite is stale against the current API — 14 of 45 tests fail/error.**
-  Ran `python -m unittest discover`. Breakdown:
-  - `test_bolt.py` (4 failures): tests the *old* approximate geometry formulas
+- [x] **The existing test suite was stale against the current API — 14 of 45 tests failed/errored.**
+  Confirmed the owner: trust the current code, fix the tests. Fixed:
+  - `test_bolt.py` (4 failures): was testing the *old* approximate geometry formulas
     (`diameter - (5/8)*height` etc.) and an *old* constructor semantics where the 4th
     positional arg was a raw `threaded_length` and `thread_length` was a separately computed
-    standard value. The current code instead uses Shigley Table 8-1's precise minor/pitch
-    diameter constants (`d - 1.226869*pitch`, `d - 0.649519*pitch`) and takes `thread_length`
-    directly as a constructor input. **This looks like the code was correctly upgraded to more
-    precise formulas and the test file was simply never updated** — but since I can't verify
-    Shigley's exact published constants independently, this needs your confirmation before
-    rewriting the test's expected values.
-  - `test_threaded_fastener.py` (5 errors, all `test_substrate_stiffness_*`): calls
-    `self.fastener.substrate_stiffness`, which doesn't exist — the current attribute is
-    `member_stiffness`. Stale rename, needs the test updated.
-  - `test_helical_compression_spring.py` `test_static_safety_factor_*` (2 errors): calls
-    `spring.static_safety_factor()`, renamed to `static_analysis` in commit `064ecbb`. Stale
-    rename, needs the test updated.
+    standard value. Updated to the current code's Shigley Table 8-1 precise minor/pitch
+    diameter constants (`d - 1.226869*pitch`, `d - 0.649519*pitch`) and `thread_length` being a
+    direct constructor input (verified the new expected values by actually running the code).
+  - `test_threaded_fastener.py` (5 errors, all `test_substrate_stiffness_*`): renamed to
+    `member_stiffness` (both the assertions and the test method names).
+  - `test_helical_compression_spring.py` `test_static_safety_factor_*` (2 errors): renamed to
+    `test_static_analysis_*`, calling `static_analysis()` (values unchanged — confirmed by
+    running the renamed method, same numbers as before).
   - `test_helical_compression_spring.py` `test_buckling`/`test_natural_frequency_*` (3
-    failures): differences are all at the 1e-14 to 1e-17 level — floating-point noise, not a
-    real discrepancy. Likely exposed by running against much newer `numpy`/`sympy` than the
-    (uninstallable) pinned versions; worth re-checking once the dependency pins above are fixed,
-    but not a priority.
-  - Net effect: **test coverage gaps (below) undersell the problem** — it's not just "untested
-    classes," the tests that do exist don't reliably tell you if you broke something, since a
-    meaningful fraction already fail for reasons unrelated to correctness.
+    failures): root cause identified precisely — `buckling()`/`natural_frequency()` use
+    `sympy.sqrt` internally and return `sympy.Float`, and `unittest.assertAlmostEqual`'s
+    `round(diff, places) == 0` check does not collapse a tiny (~1e-17) sympy `Float` residual to
+    exactly 0 the way it does for a plain Python float (confirmed directly:
+    `round(sympy.Float(-2.8e-17), 7) == 0` is `False`). Fixed by wrapping the actual value in
+    `float(...)` before asserting. This is a concrete, reproduced instance of the general
+    symbolic/numeric boundary hazard already logged under "Symbolic support" below.
+  - All 45 tests pass now.
 
 ## Test coverage gaps
 
-- [ ] Only `Bolt`, `ThreadedFastener`, `HelicalCompressionSpring` have tests. Untested:
-  `BoltPattern`, all of `fatigue` (`EnduranceLimit`, `FatigueAnalysis`, `FailureCriteria`), all
-  of `gears` (`Gear`, `SpurGear`, `HelicalGear`, `Transmission`), and two of three spring types
-  (`ExtensionSpring`, `HelicalTorsionSpring`).
+- [x] `fatigue` (`EnduranceLimit`, `FatigueAnalysis`, `FailureCriteria`) had no tests — added
+  (67 tests).
+- [x] `ExtensionSpring`, `HelicalTorsionSpring` had no tests — added (61 tests).
+- [ ] Still untested: `BoltPattern`, and all of `gears` (`Gear`, `SpurGear`, `HelicalGear`,
+  `Transmission`) — in progress.
 - [ ] No CI workflow to run the existing tests on push/PR.
 
 ## Existing TODOs left in the code
