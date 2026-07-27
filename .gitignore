@@ -1,5 +1,7 @@
 /venv/
 /.idea/
+__pycache__/
+*.pyc
 /build/
 /dist/
 /me_toolbox.egg-info/
