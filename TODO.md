@@ -66,6 +66,15 @@ Things to improve or fix, found while reviewing the codebase.
   API (e.g. an opt-in symbolic mode on the closed-form Shigley formulas: `fatigue`,
   `stress.py`, spring/bolt geometry) rather than something that only works by accident.
 
+## Getter/setter validation
+
+- [ ] The only four `@x.setter`s in the codebase (`Spring.wire_diameter`, `Spring.diameter`,
+  `Spring.spring_rate` in `me_toolbox/springs/spring.py`, and `EnduranceLimit.A95` in
+  `me_toolbox/fatigue/endurance_limit.py`) are pure passthroughs — `self._x = x`, no validation.
+  Add real checks in each setter (e.g. reject negative/zero geometry values, whatever range each
+  quantity is physically valid in) instead of removing the setters — keep the encapsulation,
+  give it a job.
+
 ## Smaller code-quality items
 
 - [ ] `tools/helpers.py:23` has a bare `except Exception: continue` inside `print_atributes`
