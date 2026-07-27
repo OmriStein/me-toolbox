@@ -42,7 +42,7 @@ class TestThreadedFastener(TestCase):
     def test_bolt_stiffness(self):
         self.assertAlmostEqual(self.fastener.bolt_stiffness, 1026695.2877576174)
 
-    def test_substrate_stiffness_1(self):
+    def test_member_stiffness_1(self):
         # test if the first substrate is smaller than half the material
         thickness = [2, 3, 3, 2, 3]
         Elastic = [200e3, 70e3, 200e3, 200e3, 200e3]
@@ -57,9 +57,9 @@ class TestThreadedFastener(TestCase):
         km = stiffness(self.bolt.diameter, Diam, [2, 3, 1.5, 1.5, 2, 3],
                        [200e3, 70e3, 200e3, 200e3, 200e3, 200e3])
         self.fastener.layers = layers
-        self.assertAlmostEqual(self.fastener.substrate_stiffness, km)
+        self.assertAlmostEqual(self.fastener.member_stiffness, km)
 
-    def test_substrate_stiffness_2(self):
+    def test_member_stiffness_2(self):
         # test if the first substrate is smaller than half the material
         thickness = [2, 4, 4]
         Elastic = [200e3, 70e3, 200e3]
@@ -71,9 +71,9 @@ class TestThreadedFastener(TestCase):
 
         km = stiffness(self.bolt.diameter, Diam, [2, 3, 1, 4], [200e3, 70e3, 70e3, 200e3])
         self.fastener.layers = layers
-        self.assertAlmostEqual(self.fastener.substrate_stiffness, km)
+        self.assertAlmostEqual(self.fastener.member_stiffness, km)
 
-    def test_substrate_stiffness_3(self):
+    def test_member_stiffness_3(self):
         # test if the first substrate is larger than half the material
         thickness = [5, 1, 2]
         Elastic = [200e3, 70e3, 200e3]
@@ -84,9 +84,9 @@ class TestThreadedFastener(TestCase):
         Diam = [D1, D2, D3, D4]
         km = stiffness(self.bolt.diameter, Diam, [4, 1, 1, 2], [200e3, 200e3, 70e3, 200e3])
         self.fastener.layers = layers
-        self.assertAlmostEqual(self.fastener.substrate_stiffness, km)
+        self.assertAlmostEqual(self.fastener.member_stiffness, km)
 
-    def test_substrate_stiffness_4(self):
+    def test_member_stiffness_4(self):
         # test symmetric layers
         thickness = [2, 4, 2]
         Elastic = [200e3, 70e3, 200e3]
@@ -97,9 +97,9 @@ class TestThreadedFastener(TestCase):
         Diam = [D1, D2, D3, D4]
         km = stiffness(self.bolt.diameter, Diam, [2, 2, 2, 2], [200e3, 70e3, 70e3, 200e3])
         self.fastener.layers = layers
-        self.assertAlmostEqual(self.fastener.substrate_stiffness, km)
+        self.assertAlmostEqual(self.fastener.member_stiffness, km)
 
-    def test_substrate_stiffness_5(self):
+    def test_member_stiffness_5(self):
         # test center between layers
         thickness = [2, 3, 3, 2]
         Elastic = [200e3, 70e3, 200e3, 200e3]
@@ -110,7 +110,7 @@ class TestThreadedFastener(TestCase):
         Diam = [D1, D2, D3, D4]
         km = stiffness(self.bolt.diameter, Diam, thickness, Elastic)
         self.fastener.layers = layers
-        self.assertAlmostEqual(self.fastener.substrate_stiffness, km)
+        self.assertAlmostEqual(self.fastener.member_stiffness, km)
 
     def test_fastener_stiffness(self):
         self.assertAlmostEqual(self.fastener.fastener_stiffness, 0.33840496783181806)

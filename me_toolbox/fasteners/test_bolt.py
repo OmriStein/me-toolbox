@@ -10,27 +10,30 @@ class TestBolt(TestCase):
         diameter = 10
         pitch = 1.5
         length = 20
-        threaded_length = 15
+        thread_length = 15
         grade = '12.9'
         E = 207e3
 
         Sp, Sut, Sy = Bolt.get_strength_prop(diameter, grade)
-        self.bolt = Bolt(diameter, pitch, length, threaded_length, Sy, Sut, Sp, E)
+        self.bolt = Bolt(diameter, pitch, length, thread_length, Sy, Sut, Sp, E)
 
     def test_height(self):
         self.assertAlmostEqual(self.bolt.height, self.bolt.pitch * sqrt(3) / 2)
 
     def test_mean_diam(self):
+        # dm - mean diameter, average of the nominal and minor diameters
         self.assertAlmostEqual(self.bolt.mean_diameter,
-                               self.bolt.diameter - (5 / 8) * self.bolt.height)
+                               0.5 * (self.bolt.diameter + self.bolt.minor_diameter))
 
     def test_root_diam(self):
+        # dr - minor diameter, Table 8-1 of Shigley
         self.assertAlmostEqual(self.bolt.minor_diameter,
-                               self.bolt.diameter - (5 / 4) * self.bolt.height)
+                               self.bolt.diameter - 1.226869 * self.bolt.pitch)
 
     def test_pitch_diam(self):
+        # dp - pitch diameter, Table 8-1 of Shigley
         self.assertAlmostEqual(self.bolt.pitch_diameter,
-                               self.bolt.diameter - (3 / 8) * self.bolt.height)
+                               self.bolt.diameter - 0.649519 * self.bolt.pitch)
 
     def test_head_diam(self):
         self.assertAlmostEqual(self.bolt.head_diameter, 1.5 * self.bolt.diameter)
@@ -44,7 +47,8 @@ class TestBolt(TestCase):
                                0.25 * pi * self.bolt.diameter ** 2)
 
     def test_thread_length(self):
-        self.assertAlmostEqual(self.bolt.thread_length, 26)
+        # thread_length is a direct constructor input, not derived
+        self.assertAlmostEqual(self.bolt.thread_length, 15)
 
     def test_stress_area(self):
         self.assertAlmostEqual(self.bolt.stress_area, 57.9895969018452)

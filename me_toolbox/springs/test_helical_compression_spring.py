@@ -103,11 +103,11 @@ class TestHelicalCompressionSpring(unittest.TestCase):
     def test_weight(self):
         self.assertAlmostEqual(self.spring.weight, 0.6264782740619925)
 
-    def test_static_safety_factor_default(self):
-        self.assertAlmostEqual(self.spring.static_safety_factor(), 2.213649075239595)
+    def test_static_analysis_default(self):
+        self.assertAlmostEqual(self.spring.static_analysis(), 2.213649075239595)
 
-    def test_static_safety_factor_solid_true(self):
-        self.assertAlmostEqual(self.spring.static_safety_factor(solid=True), 1.7709192601916766)
+    def test_static_analysis_solid_true(self):
+        self.assertAlmostEqual(self.spring.static_analysis(solid=True), 1.7709192601916766)
 
     def test_fatigue_analysis(self):
         self.assertEqual(self.result, (1.6801675569311425, 2.2136490752395956, inf, None))
@@ -115,16 +115,17 @@ class TestHelicalCompressionSpring(unittest.TestCase):
         self.assertEqual(self.result2, (0.7915777277160205, 1.1068245376197978, 97221.28061023176, 468.23730587509914))
 
     def test_buckling(self):
+        # buckling() and natural_frequency() use sympy.sqrt internally, so their results
+        # are sympy Float objects; cast to float so assertAlmostEqual's round(diff, places)
+        # check works the same way it does for plain Python floats
         _, free_length = self.spring.buckling('fixed-hinged')
-        self.assertAlmostEqual(free_length, 190.139768448083)
+        self.assertAlmostEqual(float(free_length), 190.139768448083)
 
     def test_natural_frequency_fixed_fixed(self):
-
-        self.assertAlmostEqual(self.result3['fixed-fixed'], 0.0520715383736995)
+        self.assertAlmostEqual(float(self.result3['fixed-fixed']), 0.0520715383736995)
 
     def test_natural_frequency_fixed_free(self):
-        result = self.spring.natural_frequency(7800, 0.0005)
-        self.assertAlmostEqual(self.result3['fixed-free'], 0.0260357691868497)
+        self.assertAlmostEqual(float(self.result3['fixed-free']), 0.0260357691868497)
 
     def test_calc_spring_rate(self):
         self.assertAlmostEqual(self.spring.calc_spring_rate(6, 50, 18, 'squared and ground', 75e3), 6.031572676727561)

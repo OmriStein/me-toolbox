@@ -26,6 +26,6 @@ setuptools.setup(
     package_dir={"me_toolbox": "me_toolbox"},
     packages=setuptools.find_packages(),
     include_package_data=True,
-    install_requires=['sympy', 'numpy', 'mpmath'],
+    install_requires=['sympy', 'numpy', 'mpmath', 'icecream'],
     python_requires=">=3.9",
 )

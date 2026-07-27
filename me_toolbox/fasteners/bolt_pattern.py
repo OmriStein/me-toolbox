@@ -298,8 +298,10 @@ class BoltPattern:
             self.variable_loading_stresses(Fmin, Fmax).values()
         variable_eq_stresses = []
         for i, fastener in enumerate(self.fasteners):
-            analysis = FatigueAnalysis(endurance_limit=endurance_limit[i], ductile=True,
-                                       Sy=fastener.bolt.yield_strength,
+            analysis = FatigueAnalysis(modified_endurance_limit=endurance_limit[i].modified,
+                                       stress_type='multiple', ductile=True,
+                                       ultimate_tensile_strength=fastener.bolt.tensile_strength,
+                                       yield_strength=fastener.bolt.yield_strength,
                                        Kf_normal=fastener.bolt.Kf,
                                        Kf_torsion=fastener.bolt.Kf,
                                        alt_normal_stress=alt_normal_stress[i],
